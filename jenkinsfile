@@ -20,7 +20,7 @@ pipeline {
 
         stage('Deploy to Tomcat') {
             steps {
-                sh 'sudo cp target/*.war /var/lib/tomcat10/webapps/onlinebookstore.war'
+                sh 'sudo cp /var/lib/jenkins/workspace/onlinebookstore-pipeline/target/*.war /var/lib/tomcat10/webapps/'
                 sh 'sudo systemctl restart tomcat10'
             }
         }

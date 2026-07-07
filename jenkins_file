@@ -1,0 +1,62 @@
+pipeline {
+
+    agent any
+
+    environment {
+        TOMCAT_WEBAPPS = "/var/lib/tomcat10/webapps"
+        BACKUP_DIR = "/var/lib/tomcat10/webapps/backup"
+    }
+
+    stages {
+
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/zarmeen13/onlinebookstore.git'
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Backup Existing Deployment') {
+            steps {
+                sh '''
+                    mkdir -p $BACKUP_DIR
+                    cp $TOMCAT_WEBAPPS/*.war $BACKUP_DIR/ 2>/dev/null || true
+                '''
+            }
+        }
+
+        stage('Deploy WAR File') {
+            steps {
+                sh '''
+                    cp target/*.war $TOMCAT_WEBAPPS/
+                '''
+            }
+        }
+
+        stage('Restart Tomcat') {
+            steps {
+                sh '''
+                    sudo systemctl restart tomcat10
+                '''
+            }
+        }
+    }
+
+    post {
+
+        success {
+            echo "Deployment completed successfully!"
+        }
+
+        failure {
+            echo "Deployment failed!"
+        }
+
+    }
+}

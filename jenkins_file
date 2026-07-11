@@ -1,61 +1,90 @@
 pipeline {
-    agent { label 'built-in' }
+
+    agent any
 
     tools {
-        maven 'Maven3'
-    }
-
-    environment {
-        TOMCAT_WEBAPPS = "/var/lib/tomcat10/webapps"
-        BACKUP_DIR = "/var/lib/tomcat10/webapps/backup"
+        maven 'Maven'
     }
 
     stages {
+
         stage('Clone Repository') {
+
             steps {
-                git branch: 'master', url: 'https://github.com/zarmeen13/onlinebookstore.git'
+
+                git branch: 'main',
+                url: 'https://github.com/zarmeen13/onlinebookstore.git'
+
             }
+
         }
 
         stage('Build Application') {
+
             steps {
+
                 sh 'mvn clean package'
+
             }
+
         }
 
-        stage('Backup Existing Deployment') {
+        stage('Backup Existing WAR') {
+
             steps {
+
                 sh '''
-                    mkdir -p $BACKUP_DIR
-                    cp $TOMCAT_WEBAPPS/*.war $BACKUP_DIR/ 2>/dev/null || true
+                if [ -f /var/lib/tomcat10/webapps/onlinebookstore.war ]
+                then
+                    sudo cp /var/lib/tomcat10/webapps/onlinebookstore.war \
+                    /var/lib/tomcat10/webapps/backup/onlinebookstore-$(date +%F-%H-%M-%S).war
+                fi
                 '''
+
             }
+
         }
 
-        stage('Deploy WAR File') {
+        stage('Deploy to Tomcat') {
+
             steps {
+
                 sh '''
-                    cp target/*.war $TOMCAT_WEBAPPS/
+                sudo cp target/onlinebookstore.war \
+                /var/lib/tomcat10/webapps/
                 '''
+
             }
+
         }
 
         stage('Restart Tomcat') {
+
             steps {
+
                 sh '''
-                    sudo systemctl restart tomcat10
+                sudo systemctl restart tomcat10
                 '''
             }
+
         }
+
     }
 
     post {
+
         success {
-            echo "Deployment completed successfully!"
+
+            echo 'Deployment Successful'
+
         }
+
         failure {
-            echo "Deployment failed!"
+
+            echo 'Deployment Failed'
+
         }
+
     }
+
 }
-// Webhook test trigger

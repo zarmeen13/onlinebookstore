@@ -12,7 +12,7 @@ pipeline {
 
             steps {
 
-                git branch: 'main',
+                git branch: 'master',
                 url: 'https://github.com/zarmeen13/onlinebookstore.git'
 
             }

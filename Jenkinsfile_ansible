@@ -1,0 +1,74 @@
+pipeline {
+
+    agent any
+
+    tools {
+        maven 'Maven3'
+    }
+
+    stages {
+
+        stage('Clone Repository') {
+
+            steps {
+
+                git branch: 'master',
+                url: 'https://github.com/zarmeen13/onlinebookstore.git'
+
+            }
+
+        }
+
+        stage('Build Application') {
+
+            steps {
+
+                sh 'mvn clean package'
+
+            }
+
+        }
+
+        stage('Verify WAR') {
+
+            steps {
+
+                sh 'ls -lh target/onlinebookstore.war'
+
+            }
+
+        }
+
+        stage('Deploy using Ansible') {
+
+            steps {
+
+                sh '''
+                ansible-playbook \
+                -i /home/zarmeen/bookstore_ansible/inventory.ini \
+                /home/zarmeen/bookstore_ansible/playbook.yml
+                '''
+
+            }
+
+        }
+
+    }
+
+    post {
+
+        success {
+
+            echo 'Deployment Successful!'
+
+        }
+
+        failure {
+
+            echo 'Deployment Failed!'
+
+        }
+
+    }
+
+}

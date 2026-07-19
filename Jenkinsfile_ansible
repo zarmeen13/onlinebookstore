@@ -9,7 +9,7 @@ pipeline {
     environment {
         SERVER_IP = '192.168.100.48'
         APP_NAME  = 'onlinebookstore'
-        NGROK_URL = 'https://your-ngrok-url.ngrok-free.app'
+        NGROK_URL = 'https://panning-paralyze-rectangle.ngrok-free.dev'
     }
 
     stages {

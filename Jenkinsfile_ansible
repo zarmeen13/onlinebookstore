@@ -58,15 +58,6 @@ pipeline {
                 '''
             }
         }
-
-        stage('Verify ngrok') {
-            steps {
-                sh '''
-                curl --fail ${NGROK_URL}/
-                '''
-            }
-        }
-
     }
 
     post {

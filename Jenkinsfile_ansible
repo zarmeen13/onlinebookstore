@@ -38,7 +38,8 @@ pipeline {
 
                 echo "Checking WAR contents..."
                 mkdir -p /tmp/checkwar
-                rm -rf /tmp/checkwar/*
+                rm -rf /tmp/checkwar
+                mkdir -p /tmp/checkwar
                 cd /tmp/checkwar
                 jar -xf ${WORKSPACE}/target/onlinebookstore.war
                 grep "Huzaifa" index.html

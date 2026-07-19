@@ -6,15 +6,19 @@ pipeline {
         maven 'Maven3'
     }
 
+    environment {
+        SERVER_IP = '192.168.100.48'
+        APP_NAME = 'onlinebookstore'
+        NGROK_URL = 'https://your-ngrok-url.ngrok-free.app'
+    }
+
     stages {
 
         stage('Clone Repository') {
 
             steps {
-
                 git branch: 'master',
-                url: 'https://github.com/zarmeen13/onlinebookstore.git'
-
+                    url: 'https://github.com/zarmeen13/onlinebookstore.git'
             }
 
         }
@@ -22,9 +26,7 @@ pipeline {
         stage('Build Application') {
 
             steps {
-
                 sh 'mvn clean package'
-
             }
 
         }
@@ -32,9 +34,7 @@ pipeline {
         stage('Verify WAR') {
 
             steps {
-
                 sh 'ls -lh target/onlinebookstore.war'
-
             }
 
         }
@@ -45,8 +45,44 @@ pipeline {
 
                 sh '''
                 ansible-playbook \
-                -i /home/zarmeen/bookstore_ansible/inventory.ini \
-                /home/zarmeen/bookstore_ansible/playbook.yml
+                  -i /home/zarmeen/bookstore_ansible/inventory.ini \
+                  /home/zarmeen/bookstore_ansible/playbook.yml
+                '''
+
+            }
+
+        }
+
+        stage('Verify Tomcat') {
+
+            steps {
+
+                sh '''
+                curl --fail http://${SERVER_IP}:8081/${APP_NAME} >/dev/null
+                '''
+
+            }
+
+        }
+
+        stage('Verify Nginx') {
+
+            steps {
+
+                sh '''
+                curl --fail http://${SERVER_IP}/${APP_NAME} >/dev/null
+                '''
+
+            }
+
+        }
+
+        stage('Verify ngrok') {
+
+            steps {
+
+                sh '''
+                curl --fail ${NGROK_URL}/${APP_NAME} >/dev/null
                 '''
 
             }
@@ -59,13 +95,13 @@ pipeline {
 
         success {
 
-            echo 'Deployment Successful!'
+            echo 'CI/CD Pipeline Completed Successfully!'
 
         }
 
         failure {
 
-            echo 'Deployment Failed!'
+            echo 'Pipeline Failed!'
 
         }
 

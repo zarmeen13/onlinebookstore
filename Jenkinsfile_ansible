@@ -8,85 +8,63 @@ pipeline {
 
     environment {
         SERVER_IP = '192.168.100.48'
-        APP_NAME = 'onlinebookstore'
+        APP_NAME  = 'onlinebookstore'
         NGROK_URL = 'https://your-ngrok-url.ngrok-free.app'
     }
 
     stages {
 
         stage('Clone Repository') {
-
             steps {
                 git branch: 'master',
                     url: 'https://github.com/zarmeen13/onlinebookstore.git'
             }
-
         }
 
         stage('Build Application') {
-
             steps {
                 sh 'mvn clean package'
             }
-
         }
 
         stage('Verify WAR') {
-
             steps {
                 sh 'ls -lh target/onlinebookstore.war'
             }
-
         }
 
         stage('Deploy using Ansible') {
-
             steps {
-
                 sh '''
                 ansible-playbook \
                   -i /home/zarmeen/bookstore_ansible/inventory.ini \
                   /home/zarmeen/bookstore_ansible/playbook.yml
                 '''
-
             }
-
         }
 
         stage('Verify Tomcat') {
-
             steps {
-
                 sh '''
-                curl --fail http://${SERVER_IP}:8081/${APP_NAME} >/dev/null
+                curl --fail http://${SERVER_IP}:8081/${APP_NAME}/
                 '''
-
             }
-
         }
 
         stage('Verify Nginx') {
-
             steps {
-
                 sh '''
-                curl --fail http://${SERVER_IP}/${APP_NAME} >/dev/null
+                curl --fail http://${SERVER_IP}/
                 '''
-
             }
-
         }
 
         stage('Verify ngrok') {
-
             steps {
-
                 sh '''
-                curl --fail ${NGROK_URL}/${APP_NAME} >/dev/null
+                curl --fail ${NGROK_URL}/
                 '''
-
             }
-
         }
 
     }
@@ -94,15 +72,16 @@ pipeline {
     post {
 
         success {
-
+            echo '=========================================='
             echo 'CI/CD Pipeline Completed Successfully!'
-
+            echo 'Application deployed on Tomcat, Nginx and ngrok.'
+            echo '=========================================='
         }
 
         failure {
-
+            echo '=========================================='
             echo 'Pipeline Failed!'
-
+            echo '=========================================='
         }
 
     }

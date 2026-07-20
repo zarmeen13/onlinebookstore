@@ -9,7 +9,6 @@ pipeline {
     environment {
         INVENTORY = '/home/zarmeen/bookstore_ansible/inventory.ini'
         PLAYBOOK  = '/home/zarmeen/bookstore_ansible/playbook.yml'
-        TARGET_IP = '192.168.100.48'
     }
 
     stages {
@@ -27,22 +26,34 @@ pipeline {
             }
         }
 
-        stage('Verify WAR') {
+        stage('Verify Generated WAR') {
             steps {
                 sh '''
-                echo "Current Jenkins Workspace:"
+                echo "========================================"
+                echo "Verifying generated WAR..."
+                echo "========================================"
+
+                echo "Workspace:"
                 pwd
 
+                echo
                 echo "WAR Details:"
                 ls -lh target/onlinebookstore.war
 
-                echo "Checking WAR contents..."
-                mkdir -p /tmp/checkwar
+                echo
+                echo "Extracting WAR..."
                 rm -rf /tmp/checkwar
                 mkdir -p /tmp/checkwar
+
                 cd /tmp/checkwar
-                jar -xf ${WORKSPACE}/target/onlinebookstore.war
+                jar -xf "${WORKSPACE}/target/onlinebookstore.war"
+
+                echo
+                echo "Verifying latest HTML is packaged..."
                 grep "Huzaifa" index.html
+
+                echo
+                echo "WAR verification successful."
                 '''
             }
         }
@@ -57,25 +68,6 @@ pipeline {
                 """
             }
         }
-
-        stage('Verify Tomcat') {
-            steps {
-                sh '''
-                echo "Checking Tomcat..."
-                curl --fail http://${TARGET_IP}:8081/onlinebookstore/
-                '''
-            }
-        }
-
-        stage('Verify Nginx') {
-            steps {
-                sh '''
-                echo "Checking Nginx..."
-                curl --fail http://${TARGET_IP}/
-                '''
-            }
-        }
-
     }
 
     post {
@@ -83,17 +75,18 @@ pipeline {
         success {
             echo "=========================================="
             echo "CI/CD Pipeline Completed Successfully!"
+            echo "Repository cloned successfully."
             echo "Application built successfully."
-            echo "Application deployed through Ansible."
-            echo "Tomcat verification passed."
-            echo "Nginx verification passed."
+            echo "WAR verified successfully."
+            echo "Application deployed successfully through Ansible."
+            echo "Tomcat and Nginx verified by Ansible."
             echo "=========================================="
         }
 
         failure {
             echo "=========================================="
-            echo "Pipeline Failed!"
-            echo "Check the failed stage above."
+            echo "CI/CD Pipeline Failed!"
+            echo "Check the stage where the pipeline stopped."
             echo "=========================================="
         }
 

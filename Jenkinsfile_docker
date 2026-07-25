@@ -1,0 +1,133 @@
+pipeline {
+
+    agent any
+
+
+    environment {
+
+        IMAGE_NAME = "zarmeen13/onlinebookstore"
+        CONTAINER_NAME = "onlinebookstore"
+        PORT = "9091"
+
+    }
+
+
+    stages {
+
+
+        stage('Clone Repository') {
+            steps {
+                git branch: 'master',
+                    url: 'https://github.com/zarmeen13/onlinebookstore.git'
+            }
+        }
+
+
+        stage('Docker Build') {
+            steps {
+                sh '''
+                docker build \
+                -t $IMAGE_NAME:$BUILD_NUMBER .
+                '''
+            }
+        }
+
+
+        stage('Docker Login') {
+            steps {
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+
+                    sh '''
+                    echo $DOCKER_PASS | docker login \
+                    -u $DOCKER_USER \
+                    --password-stdin
+                    '''
+
+                }
+            }
+        }
+
+
+        stage('Push Image') {
+            steps {
+                sh '''
+                docker push $IMAGE_NAME:$BUILD_NUMBER
+                '''
+            }
+        }
+
+
+        stage('Tag Latest') {
+            steps {
+                sh '''
+                docker tag \
+                $IMAGE_NAME:$BUILD_NUMBER \
+                $IMAGE_NAME:latest
+
+                docker push $IMAGE_NAME:latest
+                '''
+            }
+        }
+
+
+        stage('Remove Old Container') {
+            steps {
+                sh '''
+                docker rm -f $CONTAINER_NAME || true
+                '''
+            }
+        }
+
+
+        stage('Pull New Image') {
+            steps {
+                sh '''
+                docker pull $IMAGE_NAME:$BUILD_NUMBER
+                '''
+            }
+        }
+
+
+        stage('Run New Container') {
+            steps {
+                sh '''
+                docker run -d \
+                --name $CONTAINER_NAME \
+                -p $PORT:8080 \
+                $IMAGE_NAME:$BUILD_NUMBER
+                '''
+            }
+        }
+
+
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                docker ps
+                '''
+            }
+        }
+
+    }
+
+
+    post {
+
+        success {
+            echo "Deployment Successful - Version $BUILD_NUMBER"
+        }
+
+        failure {
+            echo "Deployment Failed"
+        }
+
+    }
+
+}
